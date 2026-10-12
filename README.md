@@ -1,6 +1,10 @@
 # claude-mods
 
-My own maintained copies of Claude Code mods. Each one is based on an upstream version that was read line by line before it was copied in. Upstream updates come in only after their diff has been reviewed.
+My Claude Code mods: maintained copies of upstream mods, and mods I wrote myself.
+
+## Maintained copies
+
+Each one is based on an upstream version that was read line by line before it was copied in. Upstream updates come in only after their diff has been reviewed.
 
 | Plugin | Upstream | Pinned commit | License |
 |---|---|---|---|
@@ -9,12 +13,19 @@ My own maintained copies of Claude Code mods. Each one is based on an upstream v
 
 Each plugin keeps its upstream `LICENSE`. Runtime code (`hooks/`, `types/`, `tests/`) is identical to the pinned commit. Only `plugin.json` metadata and a note at the top of each README differ. Upstream's site, media, CI and dev tooling were left out.
 
+## My own mods
+
+| Plugin | What it does |
+|---|---|
+| [`convo-tree`](plugins/convo-tree) | Maps the conversation into branches: a pane of branch cards with Haiku summaries, a live browser map with click-to-switch, and subagents that see one branch |
+
 ## Install
 
 ```bash
 claude plugin marketplace add bracyw/claude-mods   # or a local clone's path
 claude plugin install filetree@bracyw-mods --scope user
 claude plugin install cache-tax@bracyw-mods --scope user
+claude plugin install convo-tree@bracyw-mods --scope user
 ```
 
 Run `/reload-plugins` in any open session, or restart it.

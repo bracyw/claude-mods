@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conversation map</title>
+<style>
+  :root {
+    --bg: #faf9f5; --panel: #ffffff; --card: #ffffff; --text: #1f1e1d; --muted: #6b6a66; --faint: #a3a29c;
+    --line: #e5e3dc; --edge: #d3d1c7; --hover: #f1efe8;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #1a1a19; --panel: #232322; --card: #262624; --text: #f1efe8; --muted: #a3a29c; --faint: #6b6a66;
+      --line: #353432; --edge: #4a4945; --hover: #30302e; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-size: 14px; height: 100vh; display: flex; flex-direction: column; }
+  button { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+  button:hover { background: var(--hover); }
+  button.primary { border-color: var(--c); font-weight: 600; }
+  button:disabled { cursor: default; color: var(--muted); }
+
+  header { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--line); }
+  header h1 { font-size: 15px; font-weight: 600; margin: 0; }
+  #status { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  #status i { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+  #status.live i { background: #1d9e75; }
+  .spacer { flex: 1; }
+
+  #crumbs { padding: 10px 20px; font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  #crumbs a { color: inherit; text-decoration: none; cursor: pointer; }
+  #crumbs a:hover { color: var(--text); }
+  #crumbs a.here { color: var(--text); font-weight: 600; }
+
+  main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) clamp(280px, 32vw, 400px); }
+  #map { position: relative; overflow: auto; }
+  #canvas { position: relative; }
+  #edges { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+
+  .card { position: absolute; width: 230px; height: 112px; padding: 12px 14px; border-radius: 12px; background: var(--card);
+    border: 1px solid var(--line); cursor: pointer; display: flex; flex-direction: column; gap: 4px; transition: border-color .15s, box-shadow .15s; }
+  .card:hover { border-color: var(--edge); }
+  .card.selected { box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 25%, transparent); }
+  .card.active { border: 2px solid var(--c); padding: 11px 13px; }
+  .card.empty { border-style: dashed; background: transparent; }
+  .card .title { font-weight: 600; display: flex; gap: 6px; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .id { color: var(--c); flex: none; }
+  .card .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .card .summary { color: var(--muted); font-size: 13px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-height: 2.8em; }
+  .card .foot { margin-top: auto; font-size: 12px; color: var(--faint); display: flex; gap: 8px; align-items: center; }
+  .badge { font-size: 11px; padding: 1px 7px; border-radius: 999px; color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); }
+  .pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--c); animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .3; } }
+
+  #strip { display: flex; gap: 3px; padding: 10px 20px 14px; border-top: 1px solid var(--line); align-items: center; overflow-x: auto; }
+  #strip .label { font-size: 12px; color: var(--muted); margin-right: 8px; white-space: nowrap; }
+  #strip span.t { width: 14px; height: 14px; border-radius: 3px; flex: none; cursor: pointer; opacity: .85; }
+  #strip span.t:hover { opacity: 1; outline: 2px solid var(--text); }
+
+  #drawer { border-left: 1px solid var(--line); background: var(--panel); overflow: auto; padding: 18px 20px; }
+  #drawer h2 { font-size: 16px; margin: 0 0 6px; display: flex; gap: 8px; align-items: baseline; }
+  #drawer .meta { color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+  #drawer .summary { line-height: 1.55; margin-bottom: 14px; }
+  #drawer .actions { display: flex; gap: 8px; margin-bottom: 18px; }
+  #drawer .section { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 14px 0 6px; }
+  .turn { border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; }
+  .turn summary { list-style: none; padding: 8px 10px; cursor: pointer; display: flex; gap: 8px; }
+  .turn summary::-webkit-details-marker { display: none; }
+  .turn summary .n { color: var(--muted); flex: none; }
+  .turn summary .p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .turn[open] summary .p { white-space: normal; }
+  .turn .reply { padding: 0 10px 10px; color: var(--muted); white-space: pre-wrap; line-height: 1.5; font-size: 13px; max-height: 320px; overflow: auto; }
+  .kids a { display: block; padding: 4px 0; cursor: pointer; color: var(--text); text-decoration: none; }
+  .kids a:hover { text-decoration: underline; }
+  .empty-state { color: var(--muted); padding: 40px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Conversation map</h1>
+  <span id="status"><i></i><span>connecting…</span></span>
+  <span class="spacer"></span>
+  <button id="new" title="Start a branch off the active one">+ Branch</button>
+  <button id="split" title="Make a branch for each option in the active branch's last reply">Split last reply</button>
+</header>
+<nav id="crumbs"></nav>
+<main>
+  <div id="map"><div class="empty-state">Waiting for the session…</div></div>
+  <aside id="drawer"></aside>
+</main>
+<div id="strip"></div>
+<script>
+const token = new URLSearchParams(location.search).get('t') ?? ''
+const COLORS = ['#7f77dd', '#1d9e75', '#d85a30', '#378add', '#d4537e', '#ba7517', '#639922', '#e24b4a']
+const ROOT_COLOR = '#888780'
+const W = 230, H = 112, COL = 70, ROW = 22, PAD = 24
+
+let tree = null
+let selectedId = null // the branch the drawer shows; null follows the active one
+let openTurnId = null
+
+const $ = id => document.getElementById(id)
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
+const oneLine = s => s.replace(/\s+/g, ' ').trim()
+const compact = n => (n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k` : `${n}`)
+const labelOf = b => b.label ?? (b.id === 'root' ? 'Root' : 'New branch')
+const tagOf = b => (b.id === 'root' ? 'root' : b.id)
+
+const act = body => fetch(`/action?t=${encodeURIComponent(token)}`, { method: 'POST', body: JSON.stringify(body) })
+$('new').onclick = () => act({ action: 'new' })
+$('split').onclick = () => act({ action: 'split' })
+
+// Derived once per tree: order, colors, turns, path, layout
+const derive = t => {
+  const byId = Object.fromEntries(t.branches.map(b => [b.id, b]))
+  const kids = id => t.branches.filter(b => b.parentId === id)
+  const order = []
+  const walk = id => { order.push(byId[id]); kids(id).forEach(k => walk(k.id)) }
+  if (byId.root) walk('root')
+  // Creation order, as the pane colors them
+  const color = Object.fromEntries(t.branches.map((b, i) => [b.id, b.id === 'root' ? ROOT_COLOR : COLORS[(i - 1) % COLORS.length]]))
+  const turns = id => t.turns.filter(x => x.branchId === id)
+  const path = []
+  for (let b = byId[t.activeId]; b; b = b.parentId === null ? null : byId[b.parentId]) path.unshift(b)
+
+  // Tidy tree, left to right: leaves take the next row, a parent sits midway along its children
+  const pos = {}
+  let slot = 0
+  const place = (id, depth) => {
+    const ks = kids(id)
+    ks.forEach(k => place(k.id, depth + 1))
+    const row = ks.length ? (pos[ks[0].id].row + pos[ks.at(-1).id].row) / 2 : slot++
+    pos[id] = { row, x: PAD + depth * (W + COL), y: PAD + row * (H + ROW) }
+  }
+  if (byId.root) place('root', 0)
+  return { byId, kids, order, color, turns, path, pos }
+}
+
+const draw = () => {
+  if (!tree) return
+  const d = derive(tree)
+  const shown = d.byId[selectedId] ?? d.byId[tree.activeId]
+  const onPath = new Set(d.path.map(b => b.id))
+
+  // Breadcrumb: root to the active branch
+  $('crumbs').innerHTML = '<span>You are on</span> ' + d.path
+    .map(b => `<a data-id="${esc(b.id)}" class="${b.id === tree.activeId ? 'here' : ''}">${esc(b.id === 'root' ? labelOf(b) : `${b.id} · ${labelOf(b)}`)}</a>`)
+    .join('<span>›</span>')
+  $('crumbs').querySelectorAll('a').forEach(a => (a.onclick = () => select(a.dataset.id)))
+
+  // Cards and the edges between them
+  const height = Math.max(...Object.values(d.pos).map(p => p.y + H)) + PAD
+  const edges = tree.branches.filter(b => b.parentId !== null && d.pos[b.parentId]).map(b => {
+    // A dotted curve from the parent's right edge to the child's left, as the pane's dotted guides
+    const from = d.pos[b.parentId], to = d.pos[b.id]
+    const x1 = from.x + W, y1 = from.y + H / 2, x2 = to.x, y2 = to.y + H / 2, mid = (x1 + x2) / 2
+    const isPath = onPath.has(b.id)
+    return `<path d="M${x1} ${y1} C${mid} ${y1}, ${mid} ${y2}, ${x2} ${y2}" fill="none" stroke-linecap="round"
+      stroke="${isPath ? d.color[b.id] : 'var(--edge)'}" stroke-width="${isPath ? 2.5 : 2}" stroke-dasharray="0.1 6"/>`
+  })
+  const cards = d.order.map(b => {
+    const p = d.pos[b.id]
+    const own = d.turns(b.id)
+    const tokens = own.reduce((s, x) => s + x.tokens, 0)
+    const isActive = b.id === tree.activeId
+    const isRunning = own.some(x => x.reply === null)
+    const summary = b.summary || (own.length ? oneLine(own.at(-1).prompt) : 'No turns yet. Switch here and send a prompt to start it.')
+    const classes = ['card', isActive && 'active', own.length === 0 && 'empty', b.id === shown.id && 'selected'].filter(Boolean).join(' ')
+    return `<div class="${classes}" data-id="${esc(b.id)}" style="left:${p.x}px;top:${p.y}px;--c:${d.color[b.id]}">
+      <div class="title">${b.id === 'root' ? '' : `<span class="id">${esc(b.id)}</span>`}<span class="name" title="${esc(labelOf(b))}">${esc(labelOf(b))}</span></div>
+      <div class="summary">${esc(summary)}</div>
+      <div class="foot">
+        <span>${own.length === 0 ? 'empty' : `${own.length} turn${own.length === 1 ? '' : 's'}`}${tokens ? ` · ${compact(tokens)} tokens` : ''}</span>
+        <span class="spacer"></span>
+        ${isRunning ? '<span class="pulse" title="A turn is running"></span>' : ''}
+        ${isActive ? '<span class="badge">active</span>' : ''}
+      </div>
+    </div>`
+  })
+  const width = Math.max(...Object.values(d.pos).map(p => p.x + W)) + PAD
+  $('map').innerHTML = `<div id="canvas" style="width:${width}px;height:${height}px">
+    <svg id="edges" width="${width}" height="${height}">${edges.join('')}</svg>${cards.join('')}</div>`
+  $('map').querySelectorAll('.card').forEach(c => {
+    c.onclick = () => select(c.dataset.id)
+    c.ondblclick = () => act({ action: 'switch', id: c.dataset.id })
+  })
+
+  // Timeline: one square per turn, in the branch's color
+  $('strip').innerHTML = '<span class="label">Timeline</span>' + tree.turns
+    .map(x => `<span class="t" data-id="${esc(x.branchId)}" data-turn="${esc(x.id)}" style="background:${d.color[x.branchId] ?? ROOT_COLOR}" title="T${x.n} · ${esc(tagOf(d.byId[x.branchId] ?? { id: '?' }))} · ${esc(oneLine(x.prompt).slice(0, 80))}"></span>`)
+    .join('')
+  $('strip').querySelectorAll('.t').forEach(s => (s.onclick = () => { openTurnId = s.dataset.turn; select(s.dataset.id) }))
+
+  drawDrawer(d, shown)
+}
+
+const drawDrawer = (d, b) => {
+  const own = d.turns(b.id)
+  const isActive = b.id === tree.activeId
+  const parent = b.parentId === null ? null : d.byId[b.parentId]
+  const kids = d.kids(b.id)
+  $('drawer').innerHTML = `
+    <h2><span style="color:${d.color[b.id]}">${esc(b.id === 'root' ? 'Root' : b.id)}</span><span>${esc(labelOf(b))}</span></h2>
+    <div class="meta">${own.length} turns${parent ? ` · branched from ${esc(tagOf(parent))}` : ''}${isActive ? ' · active' : ''}</div>
+    ${b.summary ? `<div class="summary">${esc(b.summary)}</div>` : ''}
+    <div class="actions">
+      ${isActive ? '<button disabled>Active branch</button>' : `<button class="primary" id="go" style="--c:${d.color[b.id]}">Switch here</button>`}
+    </div>
+    ${kids.length ? `<div class="section">Branches off this</div><div class="kids">${kids.map(k => `<a data-id="${esc(k.id)}"><span style="color:${d.color[k.id]}">${esc(k.id)}</span> · ${esc(labelOf(k))}</a>`).join('')}</div>` : ''}
+    <div class="section">Turns</div>
+    ${own.length === 0 ? '<div class="meta">No turns yet.</div>' : ''}
+    ${own.map(x => `<details class="turn" data-turn="${esc(x.id)}" ${x.id === openTurnId ? 'open' : ''}>
+      <summary><span class="n">T${x.n}</span><span class="p">${esc(oneLine(x.prompt) || '(no prompt)')}</span></summary>
+      <div class="reply">${x.reply === null ? '<i>Still running…</i>' : esc(x.reply)}</div>
+    </details>`).join('')}`
+  if (!isActive) $('go').onclick = () => act({ action: 'switch', id: b.id })
+  $('drawer').querySelectorAll('.kids a').forEach(a => (a.onclick = () => select(a.dataset.id)))
+  $('drawer').querySelectorAll('details').forEach(el => (el.ontoggle = () => {
+    if (el.open) openTurnId = el.dataset.turn
+    else if (openTurnId === el.dataset.turn) openTurnId = null
+  }))
+}
+
+const select = id => {
+  selectedId = id
+  draw()
+  document.querySelector(`.card[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' })
+}
+
+// Live: the server sends the whole tree on connect and after every change
+const source = new EventSource(`/events?t=${encodeURIComponent(token)}`)
+source.onopen = () => { $('status').className = 'live'; $('status').lastChild.textContent = 'live' }
+source.onerror = () => { $('status').className = ''; $('status').lastChild.textContent = 'reconnecting…' }
+source.onmessage = e => {
+  const next = JSON.parse(e.data)
+  if (!next) return
+  // Follow a switch made anywhere: the drawer shows the newly active branch
+  if (tree && next.activeId !== tree.activeId) selectedId = null
+  tree = next
+  draw()
+}
+</script>
+</body>
+</html>

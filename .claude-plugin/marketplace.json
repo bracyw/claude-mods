@@ -1,8 +1,10 @@
 {
   "name": "bracyw-mods",
-  "owner": { "name": "bracyw" },
+  "owner": {
+    "name": "bracyw"
+  },
   "metadata": {
-    "description": "bracyw's maintained copies of audited Claude Code mods. Upstream updates are pulled in only after review."
+    "description": "bracyw's Claude Code mods: audited copies of upstream mods, and original ones. Upstream updates are pulled in only after review."
   },
   "plugins": [
     {
@@ -14,6 +16,11 @@
       "name": "cache-tax",
       "source": "./plugins/cache-tax",
       "description": "Prompt-cache guard: warns before a cold send and can keep the 1h cache warm. Copy of karanb192/cache-tax@06cac47 (MIT)."
+    },
+    {
+      "name": "convo-tree",
+      "source": "./plugins/convo-tree",
+      "description": "Maps the conversation into branches: a pane of branch cards, a live browser map with click-to-switch, and subagents that see one branch. Written here, not a copy."
     }
   ]
 }

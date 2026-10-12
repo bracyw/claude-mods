@@ -1,0 +1,15 @@
+{
+  "name": "convo-tree",
+  "version": "0.1.0",
+  "description": "Maps the conversation into branches: a pane of branch cards with Haiku titles and summaries, a live browser map with click-to-switch, and subagents that see only one branch. Browser view needs bun.",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "bracyw"
+  },
+  "keywords": [
+    "branches",
+    "conversation",
+    "mod",
+    "pane"
+  ]
+}
