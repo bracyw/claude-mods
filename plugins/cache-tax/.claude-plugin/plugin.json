@@ -1,0 +1,9 @@
+{
+  "name": "cache-tax",
+  "version": "2.2.1-bracyw.1",
+  "description": "A Claude Code mod that keeps the one-hour prompt cache warm during breaks and stops a cold send once with its estimated rewrite cost. Warming uses model requests and costs tokens. Requires Claude Code 2.1.287+. Maintained copy of karanb192/cache-tax@06cac47 (MIT, original author Karan Bansal).",
+  "author": {
+    "name": "bracyw"
+  },
+  "license": "MIT"
+}
