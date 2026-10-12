@@ -12,12 +12,16 @@ Each plugin keeps its upstream `LICENSE`. Runtime code (`hooks/`, `types/`, `tes
 ## Install
 
 ```bash
-claude plugin marketplace add ~/Desktop/Projects/personal/claude-mods
+claude plugin marketplace add bracyw/claude-mods   # or a local clone's path
 claude plugin install filetree@bracyw-mods --scope user
 claude plugin install cache-tax@bracyw-mods --scope user
 ```
 
 Run `/reload-plugins` in any open session, or restart it.
+
+## Repository policy
+
+Only the owner pushes here, and every commit must be GPG-signed (verified). Force pushes, branch deletion and history rewrites are blocked by repository rulesets. GitHub Actions is disabled. Outside pull requests aren't accepted.
 
 ## Taking an upstream update
 
