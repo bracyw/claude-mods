@@ -2,6 +2,8 @@
 
 [convo-tree](../convo-tree) with the same pane, browser map and commands, but branches are real forks of the session. In convo-tree the conversation stays linear and branches only group its turns. Here, switching to a branch swaps the live transcript for that branch's own, so from then on your prompts and Claude's context are that fork alone, tool calls included.
 
+![What convo-tree-2 does: each branch is its own copy of the conversation, and switching swaps which copy is live](docs/overview.svg)
+
 ## How it works
 
 ![How a branch switch works: fork, request, install](docs/how-it-works.svg)
