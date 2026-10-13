@@ -41,7 +41,7 @@ declare module 'claude-code' {
   interface PluginState {
     // pending: the branch a switch was asked for and not yet installed
     // snapshot: a branch's whole transcript, as it stood when the session last left it
-    'convo-fork': {
+    'convo-tree-2': {
       tree: Tree
       view: View
       bridge: Bridge | null

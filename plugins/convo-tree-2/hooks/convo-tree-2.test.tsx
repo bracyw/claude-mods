@@ -6,9 +6,9 @@ import { restore } from './tree'
 
 const PANE = {
   component: 'Pane',
-  requestId: 'convo-fork',
+  requestId: 'convo-tree-2',
   props: {
-    title: 'Forks',
+    title: 'Conversation',
     isFocused: false,
     bodyColumns: 60,
     placement: 'dock',
@@ -52,14 +52,14 @@ const bottom = (on: On, haiku = 'Mods research') => {
 
 const ORIGIN = { kind: 'composer' } as const
 const branch = ($: Engine, args: string) =>
-  $.command.run({ command: 'fork', args, origin: ORIGIN, presentation: { isFullscreen: true, columns: 160 } })
+  $.command.run({ command: 'branch', args, origin: ORIGIN, presentation: { isFullscreen: true, columns: 160 } })
 
 const spawn = ($: Engine, prompt: string) =>
   $.agent.spawn({
     tool_use_id: 'tu1',
     prompt,
     description: 'branch task',
-    subagentType: 'convo-fork:branch',
+    subagentType: 'convo-tree-2:branch',
     provider: { plugin: 'core', tier: 'builtin' },
     parentModel: 'opus',
     background: false,
@@ -106,7 +106,7 @@ const BAND = {
 
 // What the band above the prompt says
 const band = async ($: Engine) => {
-  const ui = await $.ui.mount({ plugin: 'convo-fork', surface: 'terminal', ...BAND })
+  const ui = await $.ui.mount({ plugin: 'convo-tree-2', surface: 'terminal', ...BAND })
   const text = (await ui.find({ type: 'Text' }))?.text
   await ui.unmount()
   return text
@@ -127,7 +127,7 @@ const type = ($: Engine) =>
 const forkTo = async ($: Engine, args: string) =>
   (
     await $.command.run({
-      command: 'fork-to',
+      command: 'branch-to',
       args,
       origin: ORIGIN,
       presentation: { isFullscreen: true, columns: 160 },
@@ -137,7 +137,7 @@ const forkTo = async ($: Engine, args: string) =>
 const list = async ($: Engine) =>
   (
     await $.command.run({
-      command: 'forks',
+      command: 'branches',
       args: '',
       origin: ORIGIN,
       presentation: { isFullscreen: true, columns: 160 },
@@ -160,7 +160,7 @@ test('switching back to a branch with turns adds a note to the next prompt', asy
   await branch($, 'Side quest')
   await turn($, 'side')
 
-  const ui = await $.ui.mount({ plugin: 'convo-fork', surface: 'terminal', ...PANE })
+  const ui = await $.ui.mount({ plugin: 'convo-tree-2', surface: 'terminal', ...PANE })
   await ui.press({ key: 'branch-root' })
   await ui.press({ key: 'switch-root' })
   const sent = await $.prompt.submit({ text: 'back to it', wait: false, origin: ORIGIN })
@@ -170,7 +170,7 @@ test('switching back to a branch with turns adds a note to the next prompt', asy
   await ui.unmount()
 })
 
-test('a convo-fork:branch spawn gets the lead-in and its branch, not branches started after it', async ($, on) => {
+test('a convo-tree-2:branch spawn gets the lead-in and its branch, not branches started after it', async ($, on) => {
   bottom(on)
   let sent = ''
   on('agent.spawn', ($, e) => {
@@ -191,7 +191,7 @@ test('a convo-fork:branch spawn gets the lead-in and its branch, not branches st
   expect(sent).toContain('Task: Compare the options.')
 })
 
-test('a convo-fork:branch spawn naming no branch is refused with the list', async ($, on) => {
+test('a convo-tree-2:branch spawn naming no branch is refused with the list', async ($, on) => {
   bottom(on)
   const spawned = await spawn($, 'do something')
 
@@ -202,7 +202,7 @@ test('the pane draws the tree and its controls on every surface with buttons', a
   bottom(on)
   await turn($, 'first')
   for (const surface of ['terminal', 'desktop', 'vscode', 'mobile'] as const) {
-    const ui = await $.ui.mount({ plugin: 'convo-fork', surface, ...PANE })
+    const ui = await $.ui.mount({ plugin: 'convo-tree-2', surface, ...PANE })
     expect(await ui.find({ key: 'branch-root' })).toBeDefined()
     expect(await ui.find({ key: 'new' })).toBeDefined()
     await ui.press({ key: 'new' })
@@ -225,7 +225,7 @@ test('a fork waits for the running turn, whose rest would land on it', async ($,
   const said = await branch($, 'Later idea')
   await $.turn.complete({ answer: 'done', turnId: 'mid', durationMs: 10, isAborted: false, reason: 'answer' })
 
-  expect(said.text).toBe('Fork once this turn finishes: its transcript is still being written.')
+  expect(said.text).toBe('Branch once this turn finishes: its transcript is still being written.')
   expect(await list($)).toBe('root "Root" (active): T1')
 })
 
@@ -262,13 +262,13 @@ test('the switch note is added once, not again after the branch has a newer turn
   await turn($, 'start')
   await branch($, 'Side quest')
   await turn($, 'side')
-  const ui = await $.ui.mount({ plugin: 'convo-fork', surface: 'terminal', ...PANE })
+  const ui = await $.ui.mount({ plugin: 'convo-tree-2', surface: 'terminal', ...PANE })
   await ui.press({ key: 'branch-root' })
   await ui.press({ key: 'switch-root' })
   await turn($, 'back on root')
   const sent = await $.prompt.submit({ text: 'still root', wait: false, origin: ORIGIN })
 
-  expect(sent.context?.some(c => c.includes('[convo-fork]')) ?? false).toBe(false)
+  expect(sent.context?.some(c => c.includes('[convo-tree-2]')) ?? false).toBe(false)
   await ui.unmount()
 })
 
@@ -337,7 +337,7 @@ test('a card opens to its turns and actions, and opening it does not switch', as
   await branch($, 'Side quest')
   await turn($, 'side')
   for (const surface of ['terminal', 'desktop'] as const) {
-    const ui = await $.ui.mount({ plugin: 'convo-fork', surface, ...PANE })
+    const ui = await $.ui.mount({ plugin: 'convo-tree-2', surface, ...PANE })
     expect(await ui.find({ key: 'switch-root' })).toBeUndefined()
     await ui.press({ key: 'branch-root' })
     expect(await ui.find({ key: 'switch-root' })).toBeDefined()

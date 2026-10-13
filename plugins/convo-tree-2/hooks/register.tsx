@@ -29,22 +29,22 @@ import type { Row } from './tree'
 
 type Api = Parameters<Hook<'session.start'>>[0]
 
-const PANE = 'convo-fork'
-// How often each surface asked to draw the pane since load, for /fork-tree to report
+const PANE = 'convo-tree-2'
+// How often each surface asked to draw the pane since load, for /tree to report
 const renders: Record<string, number> = {}
-const TITLE = 'Forks'
+const TITLE = 'Conversation'
 const COLORS = ['claude', 'suggestion', 'success', 'warning', 'planMode', 'autoAccept', 'ide', 'merged'] as const
 
-const tree = atom({ plugin: 'convo-fork', key: 'tree' } as const, emptyTree())
-const view = atom({ plugin: 'convo-fork', key: 'view' } as const, { openId: null, openTurnId: null } as View)
-const bridge = atom({ plugin: 'convo-fork', key: 'bridge' } as const, null as Bridge | null)
-const pending = atom({ plugin: 'convo-fork', key: 'pending' } as const, null as string | null)
+const tree = atom({ plugin: 'convo-tree-2', key: 'tree' } as const, emptyTree())
+const view = atom({ plugin: 'convo-tree-2', key: 'view' } as const, { openId: null, openTurnId: null } as View)
+const bridge = atom({ plugin: 'convo-tree-2', key: 'bridge' } as const, null as Bridge | null)
+const pending = atom({ plugin: 'convo-tree-2', key: 'pending' } as const, null as string | null)
 
 const snapshotOf = async ($: Api, id: string) =>
-  (await $.state.get({ plugin: 'convo-fork', key: 'snapshot', id })).value ?? null
+  (await $.state.get({ plugin: 'convo-tree-2', key: 'snapshot', id })).value ?? null
 
 const saveSnapshot = ($: Api, id: string, messages: SessionMessage[]) =>
-  $.state.set({ plugin: 'convo-fork', key: 'snapshot', id }, messages)
+  $.state.set({ plugin: 'convo-tree-2', key: 'snapshot', id }, messages)
 
 // The last turn on the main thread has no reply yet
 const isRunning = (t: Tree) => t.turns.at(-1)?.reply === null
@@ -136,7 +136,7 @@ const settle = ($: Api) =>
       })
   })
 
-const MID_TURN = 'Fork once this turn finishes: its transcript is still being written.'
+const MID_TURN = 'Branch once this turn finishes: its transcript is still being written.'
 
 // Forks the live transcript: the parent and the new branch both start from it, and the session stays on it.
 // Undefined while a turn runs, whose rest would land on the fork
@@ -192,7 +192,7 @@ const splitReply = async ($: Api) => {
   $.ui.toast(`Split into ${labels.length} branches.`)
 }
 
-const AGENT = 'convo-fork:branch'
+const AGENT = 'convo-tree-2:branch'
 const BRANCH_LINE = /^\s*Branch:\s*(.+?)\s*$/m
 
 const AGENT_PROMPT = `You are a subagent that sees one branch of the user's conversation with Claude, not the whole conversation. Its turns (user prompts and final assistant replies; tool calls omitted) open your task message, under "# Conversation branch". Other branches of the conversation are deliberately left out: work from this branch alone, and say so when the task needs something it does not hold. Finish with a concise answer for the main conversation.`
@@ -211,7 +211,7 @@ const startAgent = async ($: Api, ref: string, task: string) => {
   const t = await read($, tree)
   const branch = findBranch(t, ref)
   if (branch === undefined) return `No branch "${ref}". Branches:\n${listText(t)}`
-  if (task.trim() === '') return `Give the subagent a task: /fork-agent ${branch.id} <task>`
+  if (task.trim() === '') return `Give the subagent a task: /branch-agent ${branch.id} <task>`
   const spawned = await $.agent.spawn({
     subagentType: AGENT,
     prompt: withBranch(t, branch.id, task),
@@ -235,7 +235,7 @@ const install = async ($: Api, prompt: string | null = null) => {
   if (id === null || switching !== null || (prompt === null && isRunning(await read($, tree)))) return
   switching = { id, prompt }
   try {
-    const done = await $.session.compact({ instructions: `convo-fork: switch to branch ${id}` })
+    const done = await $.session.compact({ instructions: `convo-tree-2: switch to branch ${id}` })
     $.ui.toast(done.skip === undefined ? `Switched the session to branch ${id}.` : `Could not switch: ${done.skip}`)
   } catch {
     // busy: the next press, edit or turn tries again
@@ -329,28 +329,28 @@ const openBrowser = async ($: Api) => {
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     await Promise.all([
-      $.command.register({ name: 'fork-tree', description: 'Open the session fork pane' }),
-      $.command.register({ name: 'forks', description: 'List the session forks' }),
-      $.command.register({ name: 'fork-web', description: 'Open the session forks in your browser' }),
+      $.command.register({ name: 'tree', description: 'Open the conversation tree pane' }),
+      $.command.register({ name: 'branches', description: 'List the conversation branches' }),
+      $.command.register({ name: 'tree-web', description: 'Open the conversation tree in your browser' }),
       $.command.register({
-        name: 'fork',
-        description: 'Fork the session here; your next prompts go to the fork',
+        name: 'branch',
+        description: 'Fork the session into a new branch off the active one; your next prompts go there',
         argumentHint: '[label]',
       }),
       $.command.register({
-        name: 'fork-to',
-        description: 'Switch the session to another fork: Claude sees only that branch from then on',
+        name: 'branch-to',
+        description: 'Switch the session to another branch: Claude sees only that branch from then on',
         argumentHint: '<branch>',
       }),
       $.command.register({
-        name: 'fork-agent',
+        name: 'branch-agent',
         description: 'Run a subagent that sees only one branch of the conversation',
         argumentHint: '<branch> <task>',
       }),
       $.agent.register({
         name: 'branch',
         description:
-          'Runs a task with only one branch of this conversation as context, the forks the user made in the convo-fork pane (A, B, … or "root"). Use when the user asks for an agent that sees just one branch. Start the prompt with a line "Branch: <id or label>", then the task; the branch\'s turns are added for you, so do not restate them.',
+          'Runs a task with only one branch of this conversation as context, the branches the user made in the convo-tree-2 pane (A, B, … or "root"). Use when the user asks for an agent that sees just one branch. Start the prompt with a line "Branch: <id or label>", then the task; the branch\'s turns are added for you, so do not restate them.',
         prompt: AGENT_PROMPT,
       }),
     ])
@@ -361,31 +361,34 @@ export const register: Register = on => {
     return next(e)
   })
 
-  on('command.run', { command: 'fork-tree' }, async $ => {
+  on('command.run', { command: 'tree' }, async $ => {
     const opened = await $.ui.open({ id: PANE, title: TITLE, focus: true })
     const surfaces = (await $.session.surfaces()).join(', ') || 'none'
     if (opened.isPlaced) {
-      const drawn = Object.entries(renders).map(([s, n]) => `${s} ${n}×`).join(', ') || 'not yet'
-      return { text: `Fork pane opened (surfaces: ${surfaces}; drawn on: ${drawn}).` }
+      const drawn =
+        Object.entries(renders)
+          .map(([s, n]) => `${s} ${n}×`)
+          .join(', ') || 'not yet'
+      return { text: `Conversation tree opened (surfaces: ${surfaces}; drawn on: ${drawn}).` }
     }
     // Where no surface places panes, say so and show the forks as text
     return {
-      text: `The fork pane is open but not drawn (${opened.reason}; surfaces: ${surfaces}). Forks:\n${listText(await read($, tree))}`,
+      text: `The tree pane is open but not drawn (${opened.reason}; surfaces: ${surfaces}). Branches:\n${listText(await read($, tree))}`,
     }
   })
 
-  on('command.run', { command: 'forks' }, async $ => ({ text: listText(await read($, tree)) }))
+  on('command.run', { command: 'branches' }, async $ => ({ text: listText(await read($, tree)) }))
 
-  on('command.run', { command: 'fork-web' }, async $ => ({ text: await openBrowser($) }))
+  on('command.run', { command: 'tree-web' }, async $ => ({ text: await openBrowser($) }))
 
-  on('command.run', { command: 'fork' }, async ($, e) => {
+  on('command.run', { command: 'branch' }, async ($, e) => {
     const label = oneLine(e.args)
     const id = await newBranch($, label === '' ? null : cut(label, 40))
     if (id === undefined) return { text: MID_TURN }
-    return { text: `Forked the session as branch ${id}. Your next prompt continues there.` }
-  }).catch(() => ({ text: 'convo-fork: could not fork the session.' }))
+    return { text: `On new branch ${id}, forked from here. Your next prompt continues there.` }
+  }).catch(() => ({ text: 'convo-tree-2: could not start a branch.' }))
 
-  on('command.run', { command: 'fork-to' }, async ($, e) => {
+  on('command.run', { command: 'branch-to' }, async ($, e) => {
     const branch = findBranch(await read($, tree), e.args)
     if (branch === undefined)
       return { text: `No branch "${e.args.trim()}". Branches:\n${listText(await read($, tree))}` }
@@ -415,10 +418,10 @@ export const register: Register = on => {
     const restored = restore(live, target)
     return { messages: isPrompt && last !== undefined ? [...restored, last] : restored }
   }).catch(($, e, next) =>
-    next.called || switching === null ? next(e) : { skip: 'convo-fork: could not switch branches' },
+    next.called || switching === null ? next(e) : { skip: 'convo-tree-2: could not switch branches' },
   )
 
-  // A switch asked for from the pane, the browser or /fork-to goes in at the first of these
+  // A switch asked for from the pane, the browser or /branch-to goes in at the first of these
   on('ui.press', async ($, e, next) => {
     const done = await next(e)
     await install($)
@@ -430,12 +433,12 @@ export const register: Register = on => {
     return next(e)
   }).catch(($, e, next) => next(e))
 
-  on('command.run', { command: 'fork-agent' }, async ($, e) => {
+  on('command.run', { command: 'branch-agent' }, async ($, e) => {
     const [ref = '', ...rest] = e.args.trim().split(/\s+/)
     return { text: await startAgent($, ref, rest.join(' ')) }
   })
 
-  // Claude spawns convo-fork:branch with "Branch: A"; the branch's turns are spliced in here
+  // Claude spawns convo-tree-2:branch with "Branch: A"; the branch's turns are spliced in here
   on('agent.spawn', async ($, e, next) => {
     if (e.subagentType !== AGENT) return next(e)
     const t = await read($, tree)
@@ -450,7 +453,7 @@ export const register: Register = on => {
     const spawned = await next({ ...e, prompt: withBranch(t, branch.id, task) })
     if (spawned.agentId !== undefined) await change($, recordAgent(spawned.agentId, branch.id, task))
     return spawned
-  }).catch(($, e, next) => (next.called ? next(e) : { deny: 'convo-fork: could not attach the branch.' }))
+  }).catch(($, e, next) => (next.called ? next(e) : { deny: 'convo-tree-2: could not attach the branch.' }))
 
   // Back on a branch after talking elsewhere: the transcript is, or is about to be, that branch's; say so once
   on('prompt.submit', async ($, e, next) => {
@@ -458,7 +461,7 @@ export const register: Register = on => {
     const asked = await read($, pending)
     const branch = branchOf(t, asked ?? t.activeId)
     if (branch === undefined || (asked === null && !isReturning(t))) return next(e)
-    const note = `[convo-fork] The user switched the session to branch ${branch.id} "${labelOf(branch)}"; the conversation above is that branch's.${branch.summary === '' ? '' : ` Where it stood: ${branch.summary}`}`
+    const note = `[convo-tree-2] The user switched the session to branch ${branch.id} "${labelOf(branch)}"; the conversation above is that branch's.${branch.summary === '' ? '' : ` Where it stood: ${branch.summary}`}`
     return next({ ...e, context: [...(e.context ?? []), note] })
   }).catch(($, e, next) => next(e))
 
@@ -627,7 +630,7 @@ export const register: Register = on => {
                   <Button
                     key={`agent-${id}`}
                     label="⧉ Agent"
-                    onPress={() => void $.prompt.fill({ text: `/fork-agent ${id} `, mode: 'replace' })}
+                    onPress={() => void $.prompt.fill({ text: `/branch-agent ${id} `, mode: 'replace' })}
                   />
                 </Box>
               </Box>

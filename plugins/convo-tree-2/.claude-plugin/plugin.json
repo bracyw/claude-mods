@@ -1,0 +1,16 @@
+{
+  "name": "convo-tree-2",
+  "version": "0.1.0",
+  "description": "convo-tree with real forks: switching a branch swaps the live transcript to that fork, so Claude sees only that branch from then on. Same pane, browser map, Haiku summaries and branch subagents as convo-tree. Browser view needs bun.",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "bracyw"
+  },
+  "keywords": [
+    "branches",
+    "conversation",
+    "mod",
+    "pane",
+    "fork"
+  ]
+}

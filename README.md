@@ -18,7 +18,7 @@ Each plugin keeps its upstream `LICENSE`. Runtime code (`hooks/`, `types/`, `tes
 | Plugin | What it does |
 |---|---|
 | [`convo-tree`](plugins/convo-tree) | Maps the conversation into branches: a pane of branch cards with Haiku summaries, a live browser map with click-to-switch, and subagents that see one branch |
-| [`convo-fork`](plugins/convo-fork) | convo-tree with real forks: switching a branch swaps the live transcript, so your prompts and Claude's context are that fork alone. Not yet tried live |
+| [`convo-tree-2`](plugins/convo-tree-2) | convo-tree with real forks: same pane and commands, but switching a branch swaps the live transcript, so your prompts and Claude's context are that fork alone. Not yet tried live |
 
 ## Install
 
@@ -27,7 +27,7 @@ claude plugin marketplace add bracyw/claude-mods   # or a local clone's path
 claude plugin install filetree@bracyw-mods --scope user
 claude plugin install cache-tax@bracyw-mods --scope user
 claude plugin install convo-tree@bracyw-mods --scope user
-claude plugin install convo-fork@bracyw-mods --scope user   # instead of convo-tree, not beside it
+claude plugin install convo-tree-2@bracyw-mods --scope user   # instead of convo-tree, not beside it
 ```
 
 Run `/reload-plugins` in any open session, or restart it.

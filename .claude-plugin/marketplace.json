@@ -23,9 +23,9 @@
       "description": "Maps the conversation into branches: a pane of branch cards, a live browser map with click-to-switch, and subagents that see one branch. Written here, not a copy."
     },
     {
-      "name": "convo-fork",
-      "source": "./plugins/convo-fork",
-      "description": "convo-tree with real forks: switching a branch swaps the live transcript to that fork, so Claude sees only that branch. Written here, not a copy."
+      "name": "convo-tree-2",
+      "source": "./plugins/convo-tree-2",
+      "description": "convo-tree with real forks: same pane, map and commands, but switching a branch swaps the live transcript, so Claude sees only that branch. Written here, not a copy."
     }
   ]
 }
