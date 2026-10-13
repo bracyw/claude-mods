@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title>convo-tree-2: how a branch switch works</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#59636e"/>
+    </marker>
+    <style>
+      .h { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; }
+      .t { font-size: 13px; fill: #1f2328; }
+      .m { font-size: 12px; fill: #59636e; }
+      .c { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; fill: #1f2328; }
+      .card { fill: #ffffff; stroke: #d0d7de; stroke-width: 1; }
+      .msg { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; text-anchor: middle; fill: #1f2328; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="640" rx="12" fill="#f6f8fa"/>
+  <text x="32" y="42" class="t" font-size="16" font-weight="700">convo-tree-2 · how a branch switch works</text>
+
+  <!-- 1 FORK -->
+  <rect x="32" y="68" width="280" height="216" rx="10" class="card"/>
+  <rect x="32" y="68" width="6" height="216" rx="3" fill="#0969da"/>
+  <text x="56" y="98" class="h" fill="#0969da">1 · FORK</text>
+  <text x="56" y="120" class="m">/branch · + Branch · ⑂ Split reply</text>
+  <text x="56" y="156" class="c">$.session.messages()</text>
+  <text x="56" y="178" class="c">  → strip() the handles</text>
+  <text x="56" y="200" class="c">$.state.set(snapshot[A])</text>
+  <text x="56" y="222" class="c">$.state.set(snapshot[B])</text>
+  <text x="56" y="262" class="m">The live session is unchanged.</text>
+
+  <!-- 2 REQUEST -->
+  <rect x="340" y="68" width="280" height="216" rx="10" class="card"/>
+  <rect x="340" y="68" width="6" height="216" rx="3" fill="#8250df"/>
+  <text x="364" y="98" class="h" fill="#8250df">2 · REQUEST</text>
+  <text x="364" y="120" class="m">/branch-to B · Switch here</text>
+  <text x="364" y="156" class="c">update($, pending, () =&gt; 'B')</text>
+  <rect x="364" y="180" width="232" height="30" rx="6" fill="#fbefff" stroke="#c297ff"/>
+  <text x="378" y="200" class="t">⑂ Next prompt goes to branch B</text>
+  <text x="364" y="232" class="m">ui.render · AbovePrompt band</text>
+  <text x="364" y="262" class="m">Nothing is swapped yet.</text>
+
+  <!-- 3 INSTALL -->
+  <rect x="648" y="68" width="280" height="216" rx="10" class="card"/>
+  <rect x="648" y="68" width="6" height="216" rx="3" fill="#1a7f37"/>
+  <text x="672" y="98" class="h" fill="#1a7f37">3 · INSTALL</text>
+  <text x="672" y="120" class="m">first of ui.press · prompt.edit · turn.start</text>
+  <text x="672" y="156" class="c">$.session.compact()</text>
+  <text x="672" y="178" class="c">  → own session.compact hook</text>
+  <text x="672" y="200" class="c">snapshot[A] ← live</text>
+  <text x="672" y="222" class="c">{ messages: restore(live, B) }</text>
+  <text x="672" y="262" class="m">No summary, no model call.</text>
+
+  <line x1="314" y1="176" x2="336" y2="176" stroke="#59636e" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="622" y1="176" x2="644" y2="176" stroke="#59636e" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- state -->
+  <line x1="172" y1="284" x2="172" y2="318" stroke="#8c959f" stroke-dasharray="4 4" marker-end="url(#arrow)"/>
+  <line x1="480" y1="284" x2="480" y2="318" stroke="#8c959f" stroke-dasharray="4 4" marker-end="url(#arrow)"/>
+  <line x1="788" y1="284" x2="788" y2="318" stroke="#8c959f" stroke-dasharray="4 4" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+  <rect x="32" y="322" width="896" height="64" rx="10" class="card"/>
+  <text x="56" y="350" class="c" font-weight="700">$.state</text>
+  <text x="56" y="370" class="m">session plugin state</text>
+  <rect x="190" y="340" width="332" height="28" rx="14" fill="#f6f8fa" stroke="#d0d7de"/>
+  <text x="206" y="358" class="c">snapshot[branch]: SessionMessage[]</text>
+  <rect x="540" y="340" width="70" height="28" rx="14" fill="#f6f8fa" stroke="#d0d7de"/>
+  <text x="575" y="358" class="c" text-anchor="middle">tree</text>
+  <rect x="622" y="340" width="70" height="28" rx="14" fill="#f6f8fa" stroke="#d0d7de"/>
+  <text x="657" y="358" class="c" text-anchor="middle">view</text>
+  <rect x="704" y="340" width="90" height="28" rx="14" fill="#f6f8fa" stroke="#d0d7de"/>
+  <text x="749" y="358" class="c" text-anchor="middle">pending</text>
+
+  <!-- restore -->
+  <text x="32" y="430" class="t" font-weight="700">restore(live, target)</text>
+  <text x="184" y="430" class="m">keeps the shared prefix as the engine holds it, rebuilds the rest</text>
+
+  <text x="32" y="469" class="m">live · branch A</text>
+  <text x="32" y="507" class="m">snapshot · branch B</text>
+  <text x="32" y="545" class="m">installed</text>
+
+  <g>
+    <rect x="170" y="452" width="60" height="26" rx="5" fill="#eaeef2" stroke="#afb8c1"/><text x="200" y="469" class="msg">user</text>
+    <rect x="238" y="452" width="60" height="26" rx="5" fill="#eaeef2" stroke="#afb8c1"/><text x="268" y="469" class="msg">asst</text>
+    <rect x="306" y="452" width="60" height="26" rx="5" fill="#eaeef2" stroke="#afb8c1"/><text x="336" y="469" class="msg">user</text>
+    <rect x="386" y="452" width="60" height="26" rx="5" fill="#ddf4ff" stroke="#54aeff"/><text x="416" y="469" class="msg">asst A</text>
+    <rect x="454" y="452" width="60" height="26" rx="5" fill="#ddf4ff" stroke="#54aeff"/><text x="484" y="469" class="msg">user A</text>
+  </g>
+  <g>
+    <rect x="170" y="490" width="60" height="26" rx="5" fill="#eaeef2" stroke="#afb8c1"/><text x="200" y="507" class="msg">user</text>
+    <rect x="238" y="490" width="60" height="26" rx="5" fill="#eaeef2" stroke="#afb8c1"/><text x="268" y="507" class="msg">asst</text>
+    <rect x="306" y="490" width="60" height="26" rx="5" fill="#eaeef2" stroke="#afb8c1"/><text x="336" y="507" class="msg">user</text>
+    <rect x="386" y="490" width="60" height="26" rx="5" fill="#dafbe1" stroke="#4ac26b"/><text x="416" y="507" class="msg">asst B</text>
+  </g>
+  <g>
+    <rect x="170" y="528" width="60" height="26" rx="5" fill="#eaeef2" stroke="#57606a" stroke-width="1.5"/><text x="200" y="545" class="msg">user</text>
+    <rect x="238" y="528" width="60" height="26" rx="5" fill="#eaeef2" stroke="#57606a" stroke-width="1.5"/><text x="268" y="545" class="msg">asst</text>
+    <rect x="306" y="528" width="60" height="26" rx="5" fill="#eaeef2" stroke="#57606a" stroke-width="1.5"/><text x="336" y="545" class="msg">user</text>
+    <rect x="386" y="528" width="60" height="26" rx="5" fill="#dafbe1" stroke="#1a7f37" stroke-dasharray="4 3" stroke-width="1.5"/><text x="416" y="545" class="msg">asst B</text>
+  </g>
+
+  <line x1="376" y1="444" x2="376" y2="562" stroke="#cf222e" stroke-dasharray="3 3"/>
+  <text x="376" y="580" class="m" text-anchor="middle" fill="#cf222e">fork point</text>
+
+  <text x="470" y="538" class="m">solid: engine messages, handles kept → prompt cache hits</text>
+  <text x="470" y="556" class="m">dashed: rebuilt from the snapshot</text>
+
+  <text x="32" y="616" class="m">Why request, then install: the engine refuses a compaction while a turn runs, and runs a plugin's own compact hook only when another of its hooks asks.</text>
+</svg>
