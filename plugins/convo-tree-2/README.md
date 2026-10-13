@@ -41,7 +41,13 @@ The commands are convo-tree's, so install one of the two, not both.
 
 ## Switching mid-turn (explored, not built)
 
+![The mid-turn switch problem: one main loop, and no swap while a turn runs](docs/mid-turn-problem.svg)
+
 Today a switch asked for mid-turn waits for the turn to end. The aim is to switch at once, let the running request finish on its own branch, and show its reply only when you go back. The engine runs one main turn at a time and refuses a compaction while one runs, so the running turn has to be handed to a background loop:
+
+![Two ways to switch mid-turn: wait for A (built), or hand A off to a background fork (explored)](docs/mid-turn-options.svg)
+
+The hand-off would go:
 
 1. **Hand off.** `$.turn.abort({ turnId })` stops the main turn. Then `$.agent.spawn({ subagentType: 'fork', prompt: 'Finish the request you were on.' })` starts a background fork, which inherits the transcript as it stood, tool results included, and shares its cached prefix.
 2. **Switch.** The main turn has ended, so the usual install runs: snapshot A is saved, and B takes its place.

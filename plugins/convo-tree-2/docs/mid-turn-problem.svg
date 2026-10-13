@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="600" viewBox="0 0 960 600" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title>convo-tree-2: the mid-turn switch problem</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#59636e"/>
+    </marker>
+    <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="#ffebe9"/><line x1="0" y1="0" x2="0" y2="8" stroke="#ffcecb" stroke-width="3"/>
+    </pattern>
+    <style>
+      .t { font-size: 13px; fill: #1f2328; }
+      .b { font-size: 13px; fill: #1f2328; font-weight: 700; }
+      .m { font-size: 12px; fill: #59636e; }
+      .c { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; fill: #1f2328; }
+      .lane { font-size: 12px; fill: #59636e; font-weight: 600; letter-spacing: 0.04em; }
+      .card { fill: #ffffff; stroke: #d0d7de; }
+    </style>
+  </defs>
+
+  <rect width="960" height="600" rx="12" fill="#f6f8fa"/>
+  <text x="32" y="42" class="b" font-size="16">The mid-turn switch problem</text>
+  <text x="32" y="64" class="m">One main loop runs one turn at a time, and the transcript can only be swapped between turns.</text>
+
+  <!-- timeline card -->
+  <rect x="32" y="84" width="896" height="250" rx="10" class="card"/>
+  <rect x="200" y="96" width="440" height="226" fill="url(#hatch)" opacity="0.9"/>
+  <text x="420" y="116" class="m" text-anchor="middle" fill="#cf222e">turn running: $.session.compact() is refused</text>
+
+  <text x="52" y="160" class="lane">YOU</text>
+  <text x="52" y="232" class="lane">MAIN LOOP</text>
+  <text x="52" y="298" class="lane">LIVE TRANSCRIPT</text>
+
+  <!-- you lane -->
+  <line x1="170" y1="156" x2="910" y2="156" stroke="#d0d7de"/>
+  <circle cx="200" cy="156" r="6" fill="#0969da"/>
+  <text x="212" y="150" class="t">prompt on A</text>
+  <circle cx="400" cy="156" r="6" fill="#8250df"/>
+  <text x="412" y="150" class="t">switch to B</text>
+  <text x="412" y="172" class="c">pending = 'B'</text>
+  <circle cx="540" cy="156" r="6" fill="#59636e"/>
+  <text x="552" y="150" class="t">types a prompt</text>
+  <text x="552" y="172" class="m">engine queues it</text>
+
+  <!-- main loop lane -->
+  <rect x="200" y="210" width="440" height="34" rx="6" fill="#ddf4ff" stroke="#54aeff"/>
+  <text x="216" y="232" class="t">turn A · streaming, running tools</text>
+  <text x="646" y="206" class="c" font-size="11">turn.complete</text>
+  <path d="M700,214 l13,13 l-13,13 l-13,-13 z" fill="#1a7f37"/>
+  <text x="700" y="264" class="c" font-size="11" text-anchor="middle">turn.start → install B</text>
+  <rect x="728" y="210" width="180" height="34" rx="6" fill="#dafbe1" stroke="#4ac26b"/>
+  <text x="744" y="232" class="t">turn B · queued prompt</text>
+
+  <!-- transcript lane -->
+  <rect x="170" y="282" width="530" height="26" rx="5" fill="#ddf4ff"/>
+  <text x="186" y="300" class="c">A  (A's reply streams in here)</text>
+  <rect x="700" y="282" width="208" height="26" rx="5" fill="#dafbe1"/>
+  <text x="716" y="300" class="c">B  (restored)</text>
+
+  <!-- rules -->
+  <rect x="32" y="358" width="436" height="210" rx="10" class="card"/>
+  <text x="52" y="388" class="b">Where a plugin may ask for a compaction</text>
+  <text x="52" y="420" class="c" fill="#1a7f37">✓ ui.press</text>
+  <text x="52" y="444" class="c" fill="#1a7f37">✓ prompt.edit</text>
+  <text x="52" y="468" class="c" fill="#1a7f37">✓ turn.start</text>
+  <text x="200" y="444" class="m">between turns only</text>
+  <text x="52" y="500" class="c" fill="#cf222e">✗ command.run   ✗ prompt.submit</text>
+  <text x="52" y="524" class="c" fill="#cf222e">✗ timers, onPress (own hook skipped)</text>
+  <text x="52" y="548" class="c" fill="#cf222e">✗ anything while a turn runs</text>
+
+  <rect x="492" y="358" width="436" height="210" rx="10" class="card"/>
+  <text x="512" y="388" class="b">What we want vs. what the engine allows</text>
+  <text x="512" y="420" class="m">WANT</text>
+  <text x="512" y="442" class="t">Switch to B now. A's reply finishes on A,</text>
+  <text x="512" y="462" class="t">unseen until you go back.</text>
+  <text x="512" y="496" class="m">ENGINE</text>
+  <text x="512" y="518" class="t">One live transcript, one running turn. The reply</text>
+  <text x="512" y="538" class="t">streams into the live transcript, which stays A</text>
+  <text x="512" y="558" class="t">until the turn ends.</text>
+</svg>
