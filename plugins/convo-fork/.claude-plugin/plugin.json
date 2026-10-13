@@ -1,0 +1,16 @@
+{
+  "name": "convo-fork",
+  "version": "0.1.0",
+  "description": "Forks the session into branches: switching a branch swaps the live transcript to that fork, so Claude sees only that branch from then on. Pane, browser map, Haiku summaries and branch subagents as in convo-tree. Browser view needs bun.",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "bracyw"
+  },
+  "keywords": [
+    "branches",
+    "conversation",
+    "mod",
+    "pane",
+    "fork"
+  ]
+}
