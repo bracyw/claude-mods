@@ -38,7 +38,7 @@ The commands are convo-tree's, so install one of the two, not both.
 | Block forks and splits mid-turn (the rest of the turn would land on the fork) | Done |
 | Try it in a live session: check that the swap leaves the visible transcript and the prompt cache in the state expected | **Open** |
 | Branch subagents get the branch's full snapshot instead of its prompt/reply text | Next |
-| Switch mid-turn, with the running turn finishing on the branch it started on (see below) | Explored |
+| Switch mid-turn, with the running turn finishing on the branch it started on (see below) | Probed live: no forks here; the hand-back can be kept off B |
 | Rename, delete and merge forks | Later |
 
 ## Switching mid-turn (explored, not built)
@@ -47,24 +47,28 @@ The commands are convo-tree's, so install one of the two, not both.
 
 Today a switch asked for mid-turn waits for the turn to end. The aim is to switch at once, let the running request finish on its own branch, and show its reply only when you go back. The engine runs one main turn at a time and refuses a compaction while one runs, so the running turn has to be handed to a background loop:
 
-![Two ways to switch mid-turn: wait for A (built), or hand A off to a background fork (explored)](docs/mid-turn-options.svg)
+![Two ways to switch mid-turn: wait for A (built), or hand A off to a background agent (probed)](docs/mid-turn-options.svg)
 
 The hand-off would go:
 
-1. **Hand off.** `$.turn.abort({ turnId })` stops the main turn. Then `$.agent.spawn({ subagentType: 'fork', prompt: 'Finish the request you were on.' })` starts a background fork, which inherits the transcript as it stood, tool results included, and shares its cached prefix.
+1. **Hand off.** `$.turn.abort({ turnId })` stops the main turn. Then `$.agent.spawn` starts a background agent with A's turns and the unfinished request in its prompt. A fork, which would inherit the transcript and its cache, isn't offered (see below).
 2. **Switch.** The main turn has ended, so the usual install runs: snapshot A is saved, and B takes its place.
-3. **Land.** On the fork's `turn.complete` (matched by `agentId`), `$.session.messages({ agentId })` gives the fork's new messages. They are appended to snapshot A, A's reply is set in the tree, and the pane marks A as updated. Going back to A installs them.
+3. **Land.** On the agent's `turn.complete` (matched by `agentId`), `$.session.messages({ agentId })` gives the agent's messages. They are appended to snapshot A, A's reply is set in the tree, and the pane marks A as updated. Going back to A installs them.
 
-Open questions, to settle with a live probe before building it:
+What the live probe ([probe/fork-probe](probe/fork-probe/README.md)) found:
 
-- Whether a plugin's `$.agent.spawn` may name `fork`. The types allow it, but the engine may refuse.
-- The background agent's completion notice reaches the main loop, which would put A's reply in B's context. It would need to be dropped.
+- **No fork.** `$.agent.spawn({ subagentType: 'fork' })` is denied: `Agent type 'fork' not found`. A regular background agent starts with none of the conversation, so the hand-off would have to pass A's turns in its prompt as text, as `/branch-agent` does. That means no shared cache, and the agent restarts the request rather than continuing it.
+- **The hand-back can be kept off B.** It arrives as a `session.append` row with `door: 'delivery'`, and rewriting that row's content replaces it before the model reads it.
+- **The agent's work can be saved to A.** `$.session.messages({ agentId })` reads its transcript once it ends.
+
+Still open:
+
 - Work is lost at the abort: the step that was streaming is redone, and a tool cut off mid-run may leave partial side effects.
-- The fork and B's turns share one working directory. Edits could collide unless the fork gets its own `cwd`, such as a worktree.
-- Permission prompts from the fork show up while you're on B.
-- Going back to A before the fork finishes means waiting, or installing a partial A.
+- The agent and B's turns share one working directory. Edits could collide unless the agent gets its own `cwd`, such as a worktree.
+- Permission prompts from the agent show up while you're on B.
+- Going back to A before the agent finishes means waiting, or installing a partial A.
 
-Rough size: about 150 lines and tests once the probe answers the first two questions.
+Rough size: about 150 lines and tests. Without forks it's a redo of A's request with A's turns as text, so waiting stays the default.
 
 ## Limits and risks
 

@@ -1,0 +1,1 @@
+{ "name": "fork-probe", "version": "0.1.0", "description": "Live probe for convo-tree-2's mid-turn hand-off: can a plugin spawn a background fork, what does it inherit, and does its completion notice reach the main loop" }

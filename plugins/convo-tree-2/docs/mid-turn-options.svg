@@ -45,12 +45,12 @@
 
   <!-- option 2 -->
   <rect x="32" y="320" width="896" height="250" rx="10" class="card"/>
-  <text x="52" y="350" class="b">2 · Hand A off to a background fork</text>
-  <rect x="302" y="336" width="76" height="20" rx="10" fill="#fff8c5"/>
-  <text x="340" y="350" class="m" text-anchor="middle" fill="#9a6700">explored</text>
+  <text x="52" y="350" class="b">2 · Hand A off to a background agent</text>
+  <rect x="316" y="336" width="76" height="20" rx="10" fill="#fff8c5"/>
+  <text x="354" y="350" class="m" text-anchor="middle" fill="#9a6700">probed</text>
 
   <text x="52" y="392" class="lane">MAIN LOOP</text>
-  <text x="52" y="446" class="lane">FORK</text>
+  <text x="52" y="446" class="lane">AGENT</text>
   <rect x="200" y="372" width="180" height="32" rx="6" fill="#ddf4ff" stroke="#54aeff"/>
   <text x="216" y="393" class="t">turn A</text>
   <text x="392" y="393" class="t" fill="#cf222e">✂</text>
@@ -62,16 +62,16 @@
 
   <line x1="380" y1="404" x2="380" y2="426" stroke="#8c959f" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
   <rect x="380" y="428" width="384" height="32" rx="6" fill="#f6f8fa" stroke="#afb8c1" stroke-dasharray="4 3"/>
-  <text x="396" y="449" class="c">$.agent.spawn({ subagentType: 'fork' })  finishes A</text>
+  <text x="396" y="449" class="c">$.agent.spawn(A's turns as text)  redoes A</text>
   <line x1="764" y1="444" x2="790" y2="444" stroke="#59636e" stroke-width="1.5" marker-end="url(#arrow)"/>
   <text x="796" y="440" class="c">snapshot[A]</text>
-  <text x="796" y="456" class="c">+= fork's messages</text>
+  <text x="796" y="456" class="c">+= agent's messages</text>
 
   <text x="52" y="500" class="pro">+ you switch at once; A's reply waits on A</text>
-  <text x="52" y="522" class="pro">+ the fork reads A's prefix from cache (0.05× input)</text>
-  <text x="500" y="500" class="con">− redoes the step that was cut; a tool may stop halfway</text>
-  <text x="500" y="522" class="con">− its completion notice may land in B's context</text>
+  <text x="52" y="522" class="pro">+ its hand-back can be rewritten off B (session.append)</text>
+  <text x="500" y="500" class="con">− no fork here: it starts over from A's turns as text</text>
+  <text x="500" y="522" class="con">− a tool cut off by the abort may stop halfway</text>
   <text x="500" y="544" class="con">− shares the working folder and permission prompts with B</text>
 
-  <text x="32" y="600" class="m">The fork is cheap in tokens; its cost is the extra moving parts. Option 1 is the default.</text>
+  <text x="32" y="600" class="m">Probed live: forks aren't offered, so the hand-off redoes A's request without the shared cache. Option 1 is the default.</text>
 </svg>
