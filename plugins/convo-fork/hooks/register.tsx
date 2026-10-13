@@ -30,6 +30,8 @@ import type { Row } from './tree'
 type Api = Parameters<Hook<'session.start'>>[0]
 
 const PANE = 'convo-fork'
+// How often each surface asked to draw the pane since load, for /fork-tree to report
+const renders: Record<string, number> = {}
 const TITLE = 'Forks'
 const COLORS = ['claude', 'suggestion', 'success', 'warning', 'planMode', 'autoAccept', 'ide', 'merged'] as const
 
@@ -361,9 +363,12 @@ export const register: Register = on => {
 
   on('command.run', { command: 'fork-tree' }, async $ => {
     const opened = await $.ui.open({ id: PANE, title: TITLE, focus: true })
-    if (opened.isPlaced) return { text: 'Fork pane opened.' }
-    // Where no surface places panes, say so and show the forks as text
     const surfaces = (await $.session.surfaces()).join(', ') || 'none'
+    if (opened.isPlaced) {
+      const drawn = Object.entries(renders).map(([s, n]) => `${s} ${n}×`).join(', ') || 'not yet'
+      return { text: `Fork pane opened (surfaces: ${surfaces}; drawn on: ${drawn}).` }
+    }
+    // Where no surface places panes, say so and show the forks as text
     return {
       text: `The fork pane is open but not drawn (${opened.reason}; surfaces: ${surfaces}). Forks:\n${listText(await read($, tree))}`,
     }
@@ -501,6 +506,7 @@ export const register: Register = on => {
 
   // One bordered card per branch, indented by depth; opening a card shows its last turns and actions
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
+    renders[e.surface] = (renders[e.surface] ?? 0) + 1
     const { Box, Text, Button, Markdown } = $.ui.resolve(e)
     const t = await read($, tree)
     const v = await read($, view)
