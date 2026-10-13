@@ -360,8 +360,13 @@ export const register: Register = on => {
   })
 
   on('command.run', { command: 'fork-tree' }, async $ => {
-    await $.ui.open({ id: PANE, title: TITLE, focus: true })
-    return { text: 'Fork pane opened.' }
+    const opened = await $.ui.open({ id: PANE, title: TITLE, focus: true })
+    if (opened.isPlaced) return { text: 'Fork pane opened.' }
+    // Where no surface places panes, say so and show the forks as text
+    const surfaces = (await $.session.surfaces()).join(', ') || 'none'
+    return {
+      text: `The fork pane is open but not drawn (${opened.reason}; surfaces: ${surfaces}). Forks:\n${listText(await read($, tree))}`,
+    }
   })
 
   on('command.run', { command: 'forks' }, async $ => ({ text: listText(await read($, tree)) }))
