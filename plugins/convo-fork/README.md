@@ -39,7 +39,7 @@ The names don't clash with convo-tree's, but don't run both mods in one session:
 ## Limits and risks
 
 - **Not yet tried live.** The test kit doesn't fill `e.messages` for a compaction a plugin asks for, so the tests use the `$.session.messages()` fallback. In a live session, check that the engine hands its transcript, with handles, to the hook.
-- **A switch breaks the prompt cache.** The first turn after it pays for its whole prefix again, except for the shared opening.
+- **The prompt cache after a switch.** The shared opening is kept as the engine holds it, so it should hit. The branch's own part hits only if its cache entry hasn't expired and the rebuilt messages match what was sent before byte for byte, which isn't guaranteed. Check `cache_read_input_tokens` on the first turn after a switch.
 - **Snapshots are rebuilt from message summaries.** Text, tool calls and tool results come back. Images and thinking blocks in the part after the fork point may not.
 - **An automatic compaction on a branch** compacts that branch's live transcript, as usual. Its snapshot is the compacted one from then on, and other branches keep theirs.
 - Snapshots live in the session's plugin state, not on disk. They last as long as the session.
